@@ -8,29 +8,21 @@
 # however, at the moment, LOAS has features that are favorable to current
 # R packages. 
 
-# FIX: Current code is written to process 2018 data, but will be made to
-# batch process multiple years of data simulataneously 
-
 #### loading required libraries
 library(tidyverse)
 library(sp)
 
 #### reading in data files
 
-fh <- read_csv("~/Desktop/fh.csv") # font hill grid points
+fh <- read_csv("./data/fh.csv") # font hill grid points
 
 fh <- fh[!duplicated(fh$plotlocation),]
 
-ht <- read_csv("~/Desktop/ht_2018.csv") # telemtry data
+ht <- read_csv("./data/ht_all.csv") # telemtry data
 
 
 ht <- ht %>%  mutate(ts =  as.POSIXct(paste(date, time, sep=" "), 
-                                 format="%d-%b-%y %H:%M"))
-
-
-ht$location <- str_replace(ht$location, "-", " ")
-
-ht$plotlocation <- paste(ht$plot, ht$location, sep=" ")
+                                 format="%m/%d/%y %H:%M"))
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
@@ -55,9 +47,9 @@ for(i in 1:nrow(complete_ht)){
     }
 }
 
-print(complete_ht[is.na(complete_ht$longitude),c("plotlocation")], n=50) %>% distinct(plotlocation)
+print(complete_ht[is.na(complete_ht$longitude),c("plotlocation")] %>% distinct(plotlocation), n=51)
 
-complete_ht <- complete_ht %>% mutate(GID = paste(tagID,fix,day,sep="-")) %>% 
+complete_ht <- complete_ht %>% mutate(GID = paste(format(ts, "%Y"),tagID,fix,day,sep="-")) %>% 
   select(GID,bearing,longitude,latitude, tagID, ts)
 
 mean_times <- complete_ht %>% group_by(GID) %>% summarise(avg_ts = mean(ts, na.rm=T))
@@ -76,7 +68,7 @@ complete_ht <- cbind(complete_ht,utmcoor)
 
 complete_ht <- complete_ht %>% select(GID,x,y,bearing,avg_ts,tagID)
 
-write.csv(complete_ht, "~/Desktop/ht2018.csv", row.names = F)
+write.csv(complete_ht, "~/Desktop/ht_all_processed.csv", row.names = F)
 
 
 #### Bringing back Estimated locations and merging with True locations
