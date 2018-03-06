@@ -68,8 +68,9 @@ complete_ht <- cbind(complete_ht,utmcoor)
 
 complete_ht <- complete_ht %>% select(GID,x,y,bearing,avg_ts,tagID)
 
-write.csv(complete_ht, "~/Desktop/ht_all_processed.csv", row.names = F)
+write.csv(complete_ht, "./output/ht_all_processed.csv", row.names = F)
 
+## FIXME: Conduct analyses in R instead of LOAS?
 
 #### Bringing back Estimated locations and merging with True locations
 
