@@ -24,6 +24,8 @@ ht <- read_csv("./data/ht_all.csv") # telemtry data
 ht <- ht %>%  mutate(ts =  as.POSIXct(paste(date, time, sep=" "), 
                                  format="%m/%d/%y %H:%M"))
 
+ht <- ht[,c(1:12,29)]
+
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 ht$plotlocation <- trim(ht$plotlocation)
@@ -38,7 +40,7 @@ new_ht <- ht %>% filter(truelocation=="N") %>% left_join(fh[,c(1,4,5)], by="plot
 
 names(new_ht)[7:8] <- c("longitude","latitude")
 
-complete_ht <- new_ht %>% mutate(day = format(ts, "%j"))
+complete_ht <- new_ht %>% mutate(day = format(ts, "%j"), year = as.numeric(format(ts, "%y")))
 
 for(i in 1:nrow(complete_ht)){
   if(!is.na(complete_ht$longitude.x[i])){
