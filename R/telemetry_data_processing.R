@@ -76,19 +76,44 @@ write.csv(complete_ht, "./output/ht_all_processed.csv", row.names = F)
 
 #### Bringing back Estimated locations and merging with True locations
 
-locs <- read_csv("locs2018.csv")
+locs <- read_csv("./output/ht_locs.csv")
 
-sub <- true_ht %>% select(tagID,longitude,latitude,ts)
+locs <- locs %>% filter(xvar < 100)
 
-locs <- locs %>% select(tagID,X_Estimate,Y_Estimate, avg_ts)
+true_ht <- read_csv("./data/true_ht.csv")
 
-names(locs) <- c("tagID","longitude","latitude","ts")
+true_ht_na = true_ht %>% filter(!is.na(longitude))
+
+latlongcoor<-SpatialPoints(cbind(true_ht_na$longitude,true_ht_na$latitude), proj4string=CRS("+proj=longlat"))
+
+utmcoor<-spTransform(latlongcoor,CRS("+proj=utm +zone=18")) %>% as.data.frame()
+
+names(utmcoor) <- c("x","y")
+
+true_ht <- cbind(true_ht_na,utmcoor)
+
+sub <- true_ht %>% select(tagID,x,y,ts)
+
+sub$ts <- as.POSIXct(sub$ts, "%m/%d/%y %H:%M", tz="EST")
+
+names(sub) <- c("mfgID","x","y","ts")
+
+locs <- locs %>% select(mfgID,x,y,ts)
+
+locs$ts <- as.POSIXct(locs$ts, format="%m/%d/%Y %H:%M:%S", tz="EST")
+
+names(locs) <- c("mfgID","x","y","ts")
 
 locs <- rbind(locs,sub)
 
-ggplot(data=locs %>% filter(longitude < -77.88, longitude > -77.96 & latitude < 18.1), 
-       aes(x=longitude, y=latitude, colour=factor(tagID))) + 
-  geom_point()# +
-  #geom_path()
+locs$yr <- as.numeric(format(locs$ts, "%y"))
+locs$wk <- as.numeric(format(locs$ts, "%w"))
 
-table(locs$tagID)
+
+ggplot(data=locs %>% filter(x>187000, x<190000, y>10, y<2000000, yr == 18), 
+       aes(x=x, y=y, colour=factor(mfgID))) + 
+  geom_point() + theme(legend.position="none") +
+  geom_path()
+
+write.csv(locs, "locs.csv")
+
